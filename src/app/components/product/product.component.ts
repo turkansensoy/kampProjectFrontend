@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { Product } from 'src/app/models/product';
+import { CartService } from 'src/app/services/cart.service';
 import { ProductService } from 'src/app/services/product.service';
  
 @Component({
@@ -11,10 +14,19 @@ export class ProductComponent implements OnInit {
  
   products:Product[]=[ ];
   dataLoaded=false;
-  constructor(private productService:ProductService) { }
+  filterText="";
+  constructor(private productService:ProductService,
+    private activateRoute:ActivatedRoute,private toastrService :ToastrService,
+    private cartService :CartService){}
 
   ngOnInit(): void {
-    this.getProducts();
+    this.activateRoute.params.subscribe(params=>{
+      if(params["categoryId"]){
+        this.getProductByCategory(params["categoryId"])
+      }else{
+        this.getProducts();
+      }
+    })
     
   }
   getProducts(){
@@ -24,5 +36,19 @@ export class ProductComponent implements OnInit {
     this.dataLoaded=true;
   });
   console.log("metot bitti");
+  }
+  getProductByCategory(categoryId:number){
+      this.productService.getProductsByCategory(categoryId).subscribe(response=>{
+        this.products=response.data
+        this.dataLoaded=true;
+      })
+  }
+  addToCart(product:Product){
+     if (product.productId===1) {
+       this.toastrService.success("Hata","Bu ürün sepete eklenemez")
+     }else{
+       this.toastrService.success("Sepete eklendi",product.productName)
+       this.cartService.addToCart(product);
+     }
   }
 }
